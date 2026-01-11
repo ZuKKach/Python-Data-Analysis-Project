@@ -27,7 +27,7 @@ The project covers:
 1. Data Loading
 2. Data Quality Checks
 3. Preprocessing & Feature Engineering
-4. Exploratory Data Analysis**
+4. Exploratory Data Analysis
 5. Model Training
 6. Model Evaluation
 7. Conclusion
@@ -39,7 +39,7 @@ The project covers:
 
 ### Decision Tree Classifier
 - Captures non-linear patterns
-- Used for feature importance analysis
+- Feature importance analysis
 
 ## Key Findings
 - Attrition is influenced by:
