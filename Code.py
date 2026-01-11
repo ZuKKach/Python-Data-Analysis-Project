@@ -1,141 +1,134 @@
-# ============================================
-# Employee Attrition Project
+# Employee Attrition Analysis
 # Data Processing, EDA & Machine Learning
 # Course: Data Science with Python
-# ============================================
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
-
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-# --------------------------------------------
-# 1. Load the dataset
-# --------------------------------------------
+
+# 1. Load Dataset
 
 file_path = r"C:\Users\KiuAdmin\PycharmProjects\PythonFinalProject\.venv\Raw_IBM-HR-Employee-Attrition.csv"
 
 df = pd.read_csv(file_path)
 print("Dataset loaded successfully.")
 
-# --------------------------------------------
-# 2. Initial Data Quality Report
-# --------------------------------------------
+# 2. Basic Data Overview
 
-print("\n--- Data Quality Report ---")
-print("Shape of dataset:", df.shape)
+print("\n--- Data Overview ---")
+print("Dataset shape:", df.shape)
 
-print("\nColumn names:")
+print("\nColumns:")
 print(df.columns.tolist())
 
 print("\nData types:")
 print(df.dtypes)
 
-print("\nMissing values per column:")
+print("\nMissing values:")
 missing_values = df.isnull().sum()
 print(missing_values)
 
-# --------------------------------------------
-# 3. Handle Missing Values
-# --------------------------------------------
 
-# This dataset is relatively small and HR decisions require precision.
-# Since missing values are minimal, rows with missing data are removed.
+# 3. Missing Value Handling
 
+# The dataset does not contain missing values. If any existed, rows would be removed.
 if missing_values.sum() > 0:
-    df = df.dropna()
-    print("\nMissing values detected and removed.")
+    df.dropna(inplace=True)
+    print("\nMissing values removed.")
 else:
-    print("\nNo missing values detected.")
+    print("\nNo missing values found.")
 
-print("Shape after handling missing values:", df.shape)
+print("Current dataset shape:", df.shape)
 
-
-# 4. Remove Redundant / Constant Columns These columns provide no predictive value
-
-redundant_columns = [
+# 4. Remove Non-Informative Columns
+columns_to_drop = [
     "EmployeeCount",
     "StandardHours",
     "EmployeeNumber"
 ]
+df.drop(columns=columns_to_drop, inplace=True)
+print("\nRemoved redundant columns:", columns_to_drop)
 
-df = df.drop(columns=redundant_columns)
-print("\nDropped redundant columns:", redundant_columns)
 
-# --------------------------------------------
-# 5. Outlier Detection (IQR Method)
-# --------------------------------------------
+# 5 Age Validation
+# Employees must be at least 18 years old and  below 90
 
-Q1 = df["MonthlyIncome"].quantile(0.25)
-Q3 = df["MonthlyIncome"].quantile(0.75)
-IQR = Q3 - Q1
-
-lower_bound = Q1 - 1.5 * IQR
-upper_bound = Q3 + 1.5 * IQR
-
-outliers = df[
-    (df["MonthlyIncome"] < lower_bound) |
-    (df["MonthlyIncome"] > upper_bound)
+invalid_age_rows = df[
+    (df["Age"] < 18) |
+    (df["Age"] > 65)
 ]
+print("\nInvalid age records detected:", len(invalid_age_rows))
 
-print("\nMonthlyIncome outliers detected:", len(outliers))
-print("Outliers retained as valid HR observations.")
+# Remove invalid age rows if any exist
+if len(invalid_age_rows) > 0:
+    df = df[
+        (df["Age"] >= 18) &
+        (df["Age"] <= 90)
+    ]
+    print("Invalid age records removed.")
 
-# --------------------------------------------
-# 6. Encoding Binary Variables
-# --------------------------------------------
+print("Age validation completed.")
+
+# 6. Encode Binary Variables
+# -----------------------------------------------------------------------------------------------------------
 
 df["Attrition"] = df["Attrition"].map({"Yes": 1, "No": 0})
 df["OverTime"] = df["OverTime"].map({"Yes": 1, "No": 0})
+print("\nBinary variables encoded.")
 
-print("\nConverted Attrition and OverTime to binary values.")
-
-# --------------------------------------------
 # 7. Feature Engineering
-# --------------------------------------------
+# -----------------------------------------------------------------------------------------------------
 
-satisfaction_columns = [
+satisfaction_features = [
     "EnvironmentSatisfaction",
     "JobSatisfaction",
     "RelationshipSatisfaction",
     "WorkLifeBalance"
 ]
 
-df["TotalSatisfaction"] = df[satisfaction_columns].mean(axis=1)
+df["TotalSatisfaction"] = df[satisfaction_features].mean(axis=1)
 df["TenureRatio"] = df["YearsAtCompany"] / df["Age"]
 
-print("\nFeature engineering completed.")
+print("\nNew features created.")
 
-# --------------------------------------------
-# 8. Exploratory Data Analysis (EDA)
-# --------------------------------------------
 
-print("\n--- Descriptive Statistics ---")
+
+# 8. Exploratory Data Analysis
+# ------------------------------------------------------------------------
+
+print("\nDescriptive Statistics")
 print(df.describe())
 
-print("\nAttrition Distribution:")
+print("\nAttrition distribution:")
 print(df["Attrition"].value_counts())
 print(df["Attrition"].value_counts(normalize=True) * 100)
 
-# Attrition distribution plot
+print("Exploratory Data Analysis", "-"*100)
+
+# Attrition count
 plt.figure()
 sns.countplot(x="Attrition", data=df)
 plt.title("Employee Attrition Distribution")
 plt.show()
 
 # Age vs Attrition
-plt.figure()
-sns.histplot(data=df, x="Age", hue="Attrition", bins=30, kde=True)
+sns.histplot(
+    data=df,
+    x="Age",
+    hue="Attrition",
+    bins=30,
+    multiple="dodge"
+)
 plt.title("Age Distribution by Attrition")
 plt.show()
 
-# Monthly Income vs Attrition
+# Income vs Attrition
 plt.figure()
 sns.boxplot(x="Attrition", y="MonthlyIncome", data=df)
 plt.title("Monthly Income vs Attrition")
@@ -151,30 +144,68 @@ plt.show()
 # Overtime vs Attrition
 plt.figure()
 sns.countplot(x="OverTime", hue="Attrition", data=df)
-plt.title("Attrition vs OverTime")
+plt.title("Attrition vs Overtime")
 plt.show()
 
-# Correlation Heatmap
-numerical_df = df.select_dtypes(include=["int64", "float64"])
+# Happiness Comparison: Leavers vs Stayers
+# --------------------------------------------------
+
+happiness_cols = [
+    "JobSatisfaction",
+    "EnvironmentSatisfaction",
+    "RelationshipSatisfaction",
+    "WorkLifeBalance",
+    "TotalSatisfaction"
+]
+
+# Reshape data for easier plotting
+happiness_melted = df.melt(
+    id_vars="Attrition",
+    value_vars=happiness_cols,
+    var_name="HappinessMetric",
+    value_name="Score"
+)
+
+plt.figure(figsize=(12, 6))
+sns.boxplot(
+    x="HappinessMetric",
+    y="Score",
+    hue="Attrition",
+    data=happiness_melted
+)
+
+plt.title("Happiness Comparison: Employees Who Left vs Stayed")
+plt.xlabel("Happiness Metric")
+plt.ylabel("Satisfaction Score")
+plt.legend(title="Attrition (0 = Stayed, 1 = Left)", loc = "upper right")
+plt.xticks(rotation=20)
+plt.show()
+
+# Correlation heatmap
+numeric_df = df.select_dtypes(include=["int64", "float64"])
 
 plt.figure(figsize=(12, 8))
-sns.heatmap(numerical_df.corr(), cmap="coolwarm", annot=False)
+sns.heatmap(numeric_df.corr(), cmap="coolwarm", annot=False)
 plt.title("Correlation Heatmap")
 plt.show()
 
-# --------------------------------------------
-# 9. Prepare Data for Machine Learning
+
+# 9. Prepare Data for Modeling
+# ---------------------------------------------------------------------------------------------------------------------
+print("Preparing machine to learn :)", "-"*100)
 
 target = "Attrition"
 
-# Remove remaining categorical variables
-categorical_columns = df.select_dtypes(include=["object"]).columns
-df_model = df.drop(columns=categorical_columns)
-
+#leave  columns which are not categorical
+categorical_cols = df.select_dtypes(include=["object"]).columns
+df_model = df.drop(columns=categorical_cols)
+#divide attrition data and other data
 X = df_model.drop(columns=[target])
 y = df_model[target]
 
+
 # 10. Train-Test Split
+# --------------------------------------==================================------------------------------------------
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
@@ -186,20 +217,22 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 print("\nTrain-test split completed.")
 
-# 11. Logistic Regression
+# 11. Logistic Regression Model
+# --------------------------------------------------
 
-log_model = LogisticRegression(max_iter=1000)
+log_model = LogisticRegression(max_iter=12923)
 log_model.fit(X_train, y_train)
 
 y_pred_log = log_model.predict(X_test)
 
-print("\n--- Logistic Regression Results ---")
+print("\n Logistic Regression Results ", "-"*100)
 print("Accuracy:", accuracy_score(y_test, y_pred_log))
 print(confusion_matrix(y_test, y_pred_log))
 print(classification_report(y_test, y_pred_log))
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# 12. Decision Tree Classifier
+
+# 12. Decision Tree Model
+# --------------------------------------------------
 
 tree_model = DecisionTreeClassifier(
     max_depth=5,
@@ -207,17 +240,17 @@ tree_model = DecisionTreeClassifier(
 )
 
 tree_model.fit(X_train, y_train)
-
 y_pred_tree = tree_model.predict(X_test)
 
-print("\n--- Decision Tree Results ---")
+print("Decision Tree Results", "-"*50)
+print("Accuracy:", accuracy_score(y_test, y_pred_tree))
 print("Accuracy:", accuracy_score(y_test, y_pred_tree))
 print(confusion_matrix(y_test, y_pred_tree))
 print(classification_report(y_test, y_pred_tree))
 
-# --------------------------------------------
+
 # 13. Feature Importance (Decision Tree)
-# --------------------------------------------
+# --------------------------------------------------
 
 feature_importance = pd.DataFrame({
     "Feature": X.columns,
@@ -227,13 +260,11 @@ feature_importance = pd.DataFrame({
 print("\nTop 10 Important Features:")
 print(feature_importance.head(10))
 
-# --------------------------------------------
-# 14. Final Conclusion
-# --------------------------------------------
 
-print("\n--- Final Conclusion ---")
+# --------------------------------------------------
+# 14. Conclusion
+
+print("\n - Final Conclusion")
 print("Employee attrition can be predicted with reasonable accuracy.")
-print("Overtime, income, satisfaction, and tenure-related variables")
-print("play a key role in employee turnover.")
-print("Logistic Regression provides interpretability, while Decision Tree")
-print("captures complex relationships.")
+print("Overtime, income, satisfaction, and tenure-related factors have strong influence on employee turnover.")
+print("Logistic Regression is more interpretable, while Decision Tree captures non-linear relationships.")
