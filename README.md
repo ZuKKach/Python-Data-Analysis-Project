@@ -1,5 +1,5 @@
 # Python-Data-Analysis-Project
-Identify why employees leave. Construct a model which predicts the employee attrition.
+Identify why employees leave. Construct a model that predicts employee attrition.
 
 Author: Zurabi Katcharava
 
@@ -42,11 +42,11 @@ The project covers:
 
 
 ## Machine Learning Models
-# Logistic Regression
+### Logistic Regression
 - Used for interpretability
 - Handles linear relationships well
 
-# Decision Tree Classifier
+### Decision Tree Classifier
 - Captures non-linear patterns
 - Used for feature importance analysis
 
