@@ -1,22 +1,23 @@
 # Python-Data-Analysis-Project
 Identify why employees leave. Construct a model which predicts the employee attrition.
 
+Author: Zurabi Katcharava
+
 ## Project Overview
-This project analyzes employee attrition using the IBM HR Analytics dataset.  
+This project analyzes employee attrition from the IBM HR Analytics dataset.  
 The goal is to understand key factors influencing employee turnover and build predictive machine learning models.
 
 The project covers:
 - Data cleaning and preprocessing
 - Exploratory Data Analysis 
-- Feature engineering
 - Classification using Logistic Regression and Decision Tree
 
 ## Dataset
 - Source: IBM HR Analytics Employee Attrition Dataset
 - Size: 1,470 records
-- Target variable: `Attrition` (Yes / No)
+- Target variable: Attrition (Yes / No)
 
-## Tools & Libraries
+## Requirements
 - Python
 - pandas, numpy
 - matplotlib, seaborn
@@ -46,4 +47,4 @@ The project covers:
   - Monthly income -> Average income of people who leave is less than those who stay
   - Job and work-life satisfaction -> Especially job satisfaction and environment satisfaction are negatively correlated with attrition
     
-- Logistic Regression achieved higher overall accuracy
+- Logistic Regression achieved a higher overall accuracy
