@@ -44,6 +44,7 @@ The project covers:
 ## Key Findings
 - Attrition is influenced by:
   - Overtime -> Employees who stay overtime are more likely to leave the company
+  - Age -> People younger than 21 are the most likely to leave the company. The Lowest attrition is in the ages 35-55.
   - Monthly income -> Average income of people who leave is less than those who stay
   - Job and work-life satisfaction -> Especially job satisfaction and environment satisfaction are negatively correlated with attrition
     
